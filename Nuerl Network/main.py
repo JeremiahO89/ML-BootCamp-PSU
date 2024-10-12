@@ -1,3 +1,9 @@
+"""
+Using the following tutorial create a number image recognition software
+https://www.youtube.com/watch?v=vBlO87ZAiiw
+
+"""
+#import data set
 from torchvision import datasets
 from torchvision.transforms import ToTensor
 
@@ -15,17 +21,15 @@ test_data = datasets.MNIST (
     download = True
     )
 
-
 from torch.utils.data import DataLoader
-
 loaders = {
     'train': DataLoader(train_data, batch_size = 100, shuffle = True, num_workers = 1),
     'test': DataLoader(test_data, batch_size = 100, shuffle = True, num_workers = 1)
 }
 
-print(loaders)
 
-
+#create the model
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
@@ -50,14 +54,12 @@ class CNN(nn.Module):
         
         return F.softmax(x)
     
-    
-import torch
+# set what computer hardware to train the model on
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+#initialize the model
 model = CNN().to(device)
-
 optimizer = optim.Adam(model.parameters(), lr=0.001)
-
 loss_fn = nn.CrossEntropyLoss()
 
 def train(epoch):
@@ -72,7 +74,6 @@ def train(epoch):
         if batch_idx % 20 == 0:
             print(f'Train Epoch: {epoch} [{ batch_idx * len(data)} / {len(loaders["train"].dataset)} ({100.0 * batch_idx / len(loaders["train"]):.0f}%)] \t {loss.item():.6f}')
             
-
 def test():
     model.eval()
     test_loss = 0
@@ -83,25 +84,36 @@ def test():
             output = model(data)
             test_loss += loss_fn(output, target).item()
             pred = output.argmax(dim = 1, keepdim = True)
-            correct == pred.eq(target.view_as(pred)).sum().item()
+            correct += pred.eq(target.view_as(pred)).sum().item()
             
     test_loss /=len(loaders["test"].dataset)
-    print(f'\n Test Set: Average loss {test_loss:.4f}, Accuracy {correct}/{len(loaders["test"].dataset)} ({100.0 * correct/ len(loaders["test"].dataset):.0f}%\n)')
+    print(f'\n Test Set: Average loss {test_loss:.4f}, Accuracy {correct}/{len(loaders["test"].dataset)} ({100.0 * correct/ len(loaders["test"].dataset):.0f}%)\n')
     
+    
+    
+
+
 if __name__ == '__main__':  
-    # for epoch in range(1,11):
-    #     train(epoch)
-    #     test()
-    print(device)
- 
-     # Get the number of GPUs available
-    num_gpus = torch.cuda.device_count()
 
-    # List all GPUs with their indices
-    for i in range(num_gpus):
-        print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+
+    #train the model 10 times:
+    for epoch in range(1,11):
+        train(epoch)
+        test()
         
+        
+    # look and see if the number image matches the prediction    
+    import matplotlib.pyplot as plt
+    model.eval()
+    data, target = test_data[0]
+    data = data.unsqueeze(0).to(device)
 
-    print(torch.cuda.is_available())
-    print(torch.version.cuda)
+    output = model(data)
+    prediction = output.argmax(dim=1, keepdim = True).item()
+    print(f"Prediction: {prediction}")
+
+    image = data.squeeze(0).squeeze(0).cpu().numpy()
+    plt.imshow(image, cmap="gray")
+    plt.show()
+
 
