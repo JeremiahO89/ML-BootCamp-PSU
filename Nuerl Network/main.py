@@ -93,3 +93,15 @@ if __name__ == '__main__':
     #     train(epoch)
     #     test()
     print(device)
+ 
+     # Get the number of GPUs available
+    num_gpus = torch.cuda.device_count()
+
+    # List all GPUs with their indices
+    for i in range(num_gpus):
+        print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+        
+
+    print(torch.cuda.is_available())
+    print(torch.version.cuda)
+
